@@ -1,2 +1,2 @@
-# Sistema_Gerenciamento_Estoque
-Trabalho de extensão da Faculdade Estácio da matéria de Python.
+# Gerenciamento_Estoque
+Trabalho de extensão da Faculdade Estácio, disciplina de Python.
