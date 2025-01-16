@@ -86,6 +86,5 @@ echo '</section>';
 
 echo '</div>';
 
-echo  $footer;
 echo $javascript;
 ?>

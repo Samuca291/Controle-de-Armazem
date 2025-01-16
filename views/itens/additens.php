@@ -85,6 +85,13 @@ echo '</select>
                   <label for="exampleInputEmail1">Imagem</label>
                   <input type="file" name="arquivo" class="form-control">
                 </div>
+                
+                <div class="form-group">
+                  <label for="codigoBarras">Código de Barras</label>
+                  <input type="text" name="codigoBarras" class="form-control" id="codigoBarras" placeholder="Digite o código de barras">
+                  <small class="form-text text-muted">Campo opcional</small>
+                </div>
+                
                  <input type="hidden" name="valor" value="#">
                            
                  <input type="hidden" name="iduser" value="' . $idUsuario . '">

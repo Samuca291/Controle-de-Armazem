@@ -112,6 +112,5 @@ echo '</div>';
 echo '</div>';
 echo '</section>';
 echo '</div>';
-echo  $footer;
 echo $javascript;
 ?>

@@ -1,0 +1,28 @@
+/* Manter apenas os estilos essenciais e remover duplicações */
+.btn-remove-item {
+    background: none;
+    border: none;
+    color: #dc3545;
+    padding: 5px;
+    line-height: 1;
+    transition: all 0.3s ease;
+}
+
+.btn-remove-item:hover {
+    color: #c82333;
+    transform: rotate(180deg);
+}
+
+.btn-remove-item i {
+    font-size: 16px;
+    display: inline-block;
+}
+
+/* Remove estilos que possam interferir */
+.btn-remove-item.btn,
+.btn-remove-item.btn-xs,
+.btn-remove-item.btn-danger {
+    padding: 5px;
+    background: none;
+    border: none;
+}

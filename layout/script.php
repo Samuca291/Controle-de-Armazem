@@ -15,7 +15,7 @@ $head = '<!DOCTYPE html>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta http-equiv="content-language" content="pt-br" /> 
-  <title>AdminLTE 2 | Dashboard</title>
+  <title>GCV - Gestão de Estoque</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
   <!-- Bootstrap 3.3.6 -->
@@ -252,9 +252,279 @@ $head = '<!DOCTYPE html>
   <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
 
+  <style>
+  .sidebar-menu .treeview:hover > .treeview-menu {
+      display: block !important;
+  }
+
+  .sidebar-menu .treeview > a {
+      position: relative;
+  }
+
+  .sidebar-menu .treeview-menu {
+      display: none;
+      transition: all 0.3s ease;
+  }
+
+  body:not(.sidebar-collapse) .sidebar-menu .treeview:hover > .treeview-menu {
+      display: block !important;
+  }
+
+  /* Estilos para a imagem do user panel */
+  .sidebar-mini:not(.sidebar-collapse) .user-panel .pull-left.image {
+      width: 45px;
+      height: 45px;
+      margin-right: 10px;
+      transition: all 0.3s ease;
+  }
+
+  .sidebar-mini.sidebar-collapse .user-panel .pull-left.image {
+      width: 30px;
+      height: 30px;
+      margin: 5px auto;
+      float: none !important;
+      transition: all 0.3s ease;
+  }
+
+  .user-panel .pull-left.image img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+  }
+
+  /* Ajustes para o painel de usuário quando o sidebar está fechado */
+  .sidebar-collapse .user-panel {
+      padding: 5px;
+      text-align: center;
+  }
+
+  .sidebar-collapse .user-panel .pull-left.info {
+      display: none;
+  }
+
+  /* Ajuste para centralizar a imagem quando o sidebar está fechado */
+  .sidebar-collapse .user-panel .pull-left.image {
+      float: none !important;
+      display: block;
+      margin: 0 auto;
+  }
+
+  /* Transição suave para todos os elementos do user panel */
+  .user-panel,
+  .user-panel .pull-left.image,
+  .user-panel .pull-left.info {
+      transition: all 0.3s ease;
+  }
+
+  /* Estilos para os ícones do sidebar */
+  .sidebar-menu > li > a > .fa {
+      transition: all 0.3s ease;
+  }
+
+  .sidebar-collapse .sidebar-menu > li > a > .fa {
+      font-size: 20px; /* Aumenta o tamanho do ícone quando retraído */
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      margin: 0;
+      text-align: center;
+  }
+
+  .sidebar-collapse .sidebar-menu > li > a {
+      padding: 12px 5px;
+  }
+
+  /* Novos estilos para o nome do usuário e permissão */
+  .user-panel .pull-left.info {
+      padding: 9px 5px 5px 15px;  /* Aumentado o padding-top para 9px */
+      margin-top: 4px;  /* Adicionado margin-top de 4px */
+  }
+
+  .user-panel .pull-left.info p {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 0;
+      position: relative;
+      top: 4px;  /* Move o texto 4px para baixo */
+  }
+
+  .sidebar-mini:not(.sidebar-collapse) .user-panel .pull-left.info p {
+      font-size: 13px;
+      line-height: 1.3;
+      white-space: normal;
+      padding-right: 5px;
+      position: relative;
+      top: 4px;  /* Move o texto 4px para baixo também quando expandido */
+  }
+
+  .user-panel .pull-left.info p a {
+      color: #fff;
+      text-decoration: none;
+  }
+
+  /* Ajuste para quando o sidebar está retraído */
+  .sidebar-collapse .user-panel .pull-left.info {
+      display: none;
+  }
+
+  /* Estilo para o texto da permissão */
+  .permission-text {
+      color: #FFD700;  /* Cor dourada */
+      text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);  /* Brilho dourado */
+      animation: glow 1.5s ease-in-out infinite alternate;  /* Animação de brilho */
+  }
+
+  @keyframes glow {
+      from {
+          text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+      }
+      to {
+          text-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
+                       0 0 15px rgba(255, 215, 0, 0.3);
+      }
+  }
+
+  /* Estilos para o painel de usuário e imagem */
+  .user-panel {
+      position: relative;
+      width: 100%;
+      padding: 10px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+  }
+
+  /* Estilos para quando o sidebar está expandido */
+  .sidebar-mini:not(.sidebar-collapse) .user-panel {
+      display: flex;
+      align-items: center;
+  }
+
+  .sidebar-mini:not(.sidebar-collapse) .user-panel .pull-left.image {
+      width: 45px;
+      height: 45px;
+      margin-right: 10px;
+  }
+
+  /* Estilos para quando o sidebar está recolhido */
+  .sidebar-mini.sidebar-collapse .user-panel {
+      padding: 10px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: auto;
+  }
+
+  .sidebar-mini.sidebar-collapse .user-panel .pull-left.image {
+      width: 25px;  /* Reduzido o tamanho */
+      height: 25px; /* Reduzido o tamanho */
+      margin: 0;
+      padding: 0;
+      float: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      left: 0; /* Remove qualquer deslocamento */
+  }
+
+  /* Estilos comuns para a imagem */
+  .user-panel .pull-left.image img {
+      width: 100% !important; /* Força o tamanho da imagem */
+      height: 100% !important;
+      border-radius: 50%;
+      object-fit: cover;
+      max-width: none;
+      padding: 0;
+      margin: 0;
+  }
+
+  .user-panel .pull-left.image a {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      margin: 0;
+  }
+
+  /* Remove os estilos float e ajusta o posicionamento quando o sidebar está recolhido */
+  .sidebar-collapse .user-panel .pull-left {
+      float: none !important;
+      position: static;
+  }
+
+  .sidebar-collapse .user-panel {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 45px;
+      padding: 10px 0;
+  }
+
+  /* Remove margens e paddings desnecessários no modo recolhido */
+  .sidebar-collapse .main-sidebar .user-panel {
+      margin: 0;
+      padding: 10px 0;
+  }
+
+  /* Fixar header e sidebar */
+  .main-header {
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+  }
+
+  .main-sidebar {
+      position: fixed;
+      top: 50px;
+      bottom: 0;
+      left: 0;
+      padding-top: 0;
+      min-height: 100%;
+      z-index: 810;
+      overflow: visible;
+  }
+
+  /* Ajuste do conteúdo principal */
+  .content-wrapper {
+      margin-top: 50px;
+  }
+
+  /* Ajuste para o scroll do sidebar */
+  .sidebar {
+      height: auto;
+      overflow: visible;
+  }
+
+  /* Ajuste para o treeview-menu quando o sidebar está fechado */
+  .sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > .treeview-menu {
+      display: block !important;
+      position: absolute;
+      left: 50px;
+      top: 0;
+      margin: 0;
+      padding: 10px 0;
+      width: 180px;
+      background: #2c3b41;
+      z-index: 1000;
+  }
+
+  /* Garante que o item pai tenha posição relativa */
+  .sidebar-mini.sidebar-collapse .sidebar-menu > li {
+      position: relative !important;
+  }
+
+  /* Garante que o submenu fique visível */
+  .sidebar-mini.sidebar-collapse .sidebar-menu > li:hover {
+      overflow: visible !important;
+  }
+  </style>
 
 </head>
-<body class="skin-blue sidebar-mini" style="height: auto; min-height: 100%;">
+<body class="skin-blue sidebar-mini sidebar-collapse" style="height: auto; min-height: 100%;">
 <div class="wrapper" style="height: auto; min-height: 100%;">';
 
 $header = '<header class="main-header">
@@ -263,7 +533,7 @@ $header = '<header class="main-header">
       <!-- mini logo for sidebar mini 50x50 pixels -->
       <span class="logo-mini"><b>A</b>LT</span>
       <!-- logo for regular state and mobile devices -->
-      <span class="logo-lg"><b>Admin</b>LTE</span>
+      <span class="logo-lg"><b>GCV</b></span>
     </a>
     <!-- Header Navbar: style can be found in header.less -->
     <nav class="navbar navbar-static-top">
@@ -274,11 +544,8 @@ $header = '<header class="main-header">
 
       <div class="navbar-custom-menu">
         <ul class="nav navbar-nav">
-          <!-- Messages: style can be found in dropdown.less-->
-          <li class="dropdown messages-menu">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              <i class="fa fa-envelope-o"></i>
-              <span class="label label-success">4</span>
+         
+
             </a>
             <ul class="dropdown-menu">
               <li class="header">You have 4 messages</li>
@@ -328,145 +595,16 @@ $header = '<header class="main-header">
                         <img src="' . $url . 'dist/img/user3-128x128.jpg" class="img-circle" alt="User Image">
                       </div>
                       <h4>
-                        Sales Department
-                        <small><i class="fa fa-clock-o"></i> Yesterday</small>
-                      </h4>
-                      <p>Why not buy a new awesome theme?</p>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <div class="pull-left">
-                        <img src="' . $url . 'dist/img/user4-128x128.jpg" class="img-circle" alt="User Image">
-                      </div>
-                      <h4>
-                        Reviewers
-                        <small><i class="fa fa-clock-o"></i> 2 days</small>
-                      </h4>
-                      <p>Why not buy a new awesome theme?</p>
-                    </a>
-                  </li>
+                      
                 </ul>
               </li>
               <li class="footer"><a href="#">See All Messages</a></li>
             </ul>
           </li>
           <!-- Notifications: style can be found in dropdown.less -->
-          <li class="dropdown notifications-menu">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              <i class="fa fa-bell-o"></i>
-              <span class="label label-warning">10</span>
-            </a>
-            <ul class="dropdown-menu">
-              <li class="header">You have 10 notifications</li>
-              <li>
-                <!-- inner menu: contains the actual data -->
-                <ul class="menu">
-                  <li>
-                    <a href="#">
-                      <i class="fa fa-users text-aqua"></i> 5 new members joined today
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <i class="fa fa-warning text-yellow"></i> Very long description here that may not fit into the
-                      page and may cause design problems
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <i class="fa fa-users text-red"></i> 5 new members joined
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <i class="fa fa-shopping-cart text-green"></i> 25 sales made
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#">
-                      <i class="fa fa-user text-red"></i> You changed your username
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="footer"><a href="#">View all</a></li>
-            </ul>
-          </li>
+
           <!-- Tasks: style can be found in dropdown.less -->
-          <li class="dropdown tasks-menu">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              <i class="fa fa-flag-o"></i>
-              <span class="label label-danger">9</span>
-            </a>
-            <ul class="dropdown-menu">
-              <li class="header">You have 9 tasks</li>
-              <li>
-                <!-- inner menu: contains the actual data -->
-                <ul class="menu">
-                  <li><!-- Task item -->
-                    <a href="#">
-                      <h3>
-                        Design some buttons
-                        <small class="pull-right">20%</small>
-                      </h3>
-                      <div class="progress xs">
-                        <div class="progress-bar progress-bar-aqua" style="width: 20%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
-                          <span class="sr-only">20% Complete</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <!-- end task item -->
-                  <li><!-- Task item -->
-                    <a href="#">
-                      <h3>
-                        Create a nice theme
-                        <small class="pull-right">40%</small>
-                      </h3>
-                      <div class="progress xs">
-                        <div class="progress-bar progress-bar-green" style="width: 40%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
-                          <span class="sr-only">40% Complete</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <!-- end task item -->
-                  <li><!-- Task item -->
-                    <a href="#">
-                      <h3>
-                        Some task I need to do
-                        <small class="pull-right">60%</small>
-                      </h3>
-                      <div class="progress xs">
-                        <div class="progress-bar progress-bar-red" style="width: 60%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
-                          <span class="sr-only">60% Complete</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <!-- end task item -->
-                  <li><!-- Task item -->
-                    <a href="#">
-                      <h3>
-                        Make beautiful transitions
-                        <small class="pull-right">80%</small>
-                      </h3>
-                      <div class="progress xs">
-                        <div class="progress-bar progress-bar-yellow" style="width: 80%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
-                          <span class="sr-only">80% Complete</span>
-                        </div>
-                      </div>
-                    </a>
-                  </li>
-                  <!-- end task item -->
-                </ul>
-              </li>
-              <li class="footer">
-                <a href="#">View all tasks</a>
-              </li>
-            </ul>
-          </li>
+
           <!-- User Account: style can be found in dropdown.less -->
           <li class="dropdown user user-menu">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -493,32 +631,22 @@ switch ($perm) {
     break;
 }
 
-$header .= ' <small>Member since Nov. 2012</small>
+$header .= '
                 </p>
               </li>
               <!-- Menu Body -->
-              <li class="user-body">
-                <div class="row">
-                  <div class="col-xs-4 text-center">
-                    <a href="#">Followers</a>
-                  </div>
-                  <div class="col-xs-4 text-center">
-                    <a href="#">Sales</a>
-                  </div>
-                  <div class="col-xs-4 text-center">
-                    <a href="#">Friends</a>
-                  </div>
-                </div>
+             
                 <!-- /.row -->
               </li>
               <!-- Menu Footer-->
               <li class="user-footer">
                 <div class="pull-left">
-                  <a href="' . $url . 'usuarios/profile.php" class="btn btn-default btn-flat">Profile</a>
+                
                 </div>
-                <div class="pull-right">
-                  <a href="' . $url . 'destroy.php" class="btn btn-default btn-flat">Sign out</a>
-                </div>
+              <div style="text-align: center;">
+  <a href="' . $url . 'destroy.php" class="btn btn-default btn-flat">Sair</a>
+</div>
+
               </li>
             </ul>
           </li>
@@ -538,148 +666,116 @@ $aside = '<!-- Left side column. contains the logo and sidebar -->
       <!-- Sidebar user panel -->
       <div class="user-panel">
         <div class="pull-left image">
-          <img src="' . $url . '' . $foto . '" class="img-circle" style="height:50px; width:50px;" alt="User Image">
-         
+          <a href="' . $url . 'usuarios/">
+            <img src="' . $url . '' . $foto . '" class="img-circle" style="height:40px; width:40px;" alt="User Image">
+          </a>
         </div>
         <div class="pull-left info">
-          <p>' . $username . '</p>
-          <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+          <a href="' . $url . 'usuarios/">
+            <p>' . strtoupper($username) . ' - <span class="permission-text">';
+            
+// Adiciona a permissão do usuário
+switch ($perm) {
+    case 0:
+        $aside .= 'Cliente';
+        break;
+    case 1:
+        $aside .= 'Administrador';
+        break;
+    case 2:
+        $aside .= 'Vendedor';
+        break;
+}
 
+$aside .= '</span></p>
+          </a>
         </div>
       </div>
-      <!-- search form -->
-      <form action="#" method="get" class="sidebar-form">
-        <div class="input-group">
-          <input type="text" name="q" class="form-control" placeholder="Search...">
-              <span class="input-group-btn">
-                <button type="submit" name="search" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i>
-                </button>
-              </span>
-        </div>
-      </form>
-      <!-- /.search form -->
-      <!-- sidebar menu: : style can be found in sidebar.less -->
+
       <ul class="sidebar-menu">
-        <li class="header">MAIN NAVIGATION</li>
         <li class="active treeview">
           <a href="' . $url . '">
-            <i class="fa fa-dashboard"></i> <span>Dashboard</span>
-            
+            <i class="fa fa-home"></i> <span>Dashboard</span>
           </a>
-          
         </li>
-        
-<!-- Produtos -->
 
         <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
+          <a href="' . $url . 'prod/">
+            <i class="fa fa-cubes" onclick="window.location.href=\'' . $url . 'prod/\'"></i>
             <span>Produtos</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
+            <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-            <li><a href="' . $url . 'prod/"><i class="fa fa-circle-o"></i>Produtos</a></li>
-            <li><a href="' . $url . 'prod/addprod.php"><i class="fa fa-circle-o"></i>Add Produtos</a></li>
-            <li><a href="' . $url . 'itens/"><i class="fa fa-circle-o"></i>Itens</a></li>
-             <li><a href="' . $url . 'itens/totalitens.php"><i class="fa fa-circle-o"></i>Total Itens</a></li>
-            <li><a href="' . $url . 'itens/additens.php"><i class="fa fa-circle-o"></i>Add Itens</a></li>
+            <li><a href="' . $url . 'prod/"><i class="fa fa-cube"></i>Produtos</a></li>
+            <li><a href="' . $url . 'prod/addprod.php"><i class="fa fa-plus-circle"></i>Add Produtos</a></li>
+            <li><a href="' . $url . 'itens/"><i class="fa fa-list"></i>Itens</a></li>
+            <li><a href="' . $url . 'itens/totalitens.php"><i class="fa fa-calculator"></i>Total Itens</a></li>
+            <li><a href="' . $url . 'itens/additens.php"><i class="fa fa-plus-circle"></i>Add Itens</a></li>
           </ul>
-        </li>
+        </li>';
 
-        <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
+if ($perm != 2) {
+    $aside .= '<li class="treeview">
+          <a href="' . $url . 'relatorios/">
+            <i class="fa fa-bar-chart" onclick="window.location.href=\'' . $url . 'relatorios/\'"></i>
             <span>Relatorios</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
+            <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-            <li><a href="' . $url . 'relatorios/"><i class="fa fa-circle-o"></i>Relatorios Produtos</a></li>
-            <!--<li><a href="' . $url . 'relatorios/compclientes.php"><i class="fa fa-circle-o"></i>Relatorios Clientes</a></li>-->
-            
+            <li><a href="' . $url . 'relatorios/"><i class="fa fa-line-chart"></i>Relatorios Produtos</a></li>
+            <li><a href="' . $url . 'relatorios/dashboard_vendas.php"><i class="fa fa-dashboard"></i>Dashboard de Vendas</a></li>
           </ul>
         </li>
 
         <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
+          <a href="' . $url . 'fabricante/">
+            <i class="fa fa-industry" onclick="window.location.href=\'' . $url . 'fabricante/\'"></i>
             <span>Fabricante</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
+            <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-            <li><a href="' . $url . 'fabricante/"><i class="fa fa-circle-o"></i>Fabricantes</a></li>
-            <li><a href="' . $url . 'fabricante/addfabricante.php"><i class="fa fa-circle-o"></i>Add Fabricante</a></li>
+            <li><a href="' . $url . 'fabricante/"><i class="fa fa-building"></i>Fabricantes</a></li>
+            <li><a href="' . $url . 'fabricante/addfabricante.php"><i class="fa fa-plus-circle"></i>Add Fabricante</a></li>
           </ul>
-        </li>
+        </li>';
+}
 
-        <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
+$aside .= '<li class="treeview">
+          <a href="' . $url . 'representante/">
+            <i class="fa fa-suitcase" onclick="window.location.href=\'' . $url . 'representante/\'"></i>
             <span>Representante</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
+            <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-            <li><a href="' . $url . 'representante/"><i class="fa fa-circle-o"></i>Representantes</a></li>            
-            <li><a href="' . $url . 'representante/addrepresentante.php"><i class="fa fa-circle-o"></i>Add Representante</a></li>
+            <li><a href="' . $url . 'representante/"><i class="fa fa-user-md"></i>Representantes</a></li>
+            <li><a href="' . $url . 'representante/addrepresentante.php"><i class="fa fa-plus-circle"></i>Add Representante</a></li>
           </ul>
-        </li>
+        </li>';
 
-        <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
+if ($perm != 2) {
+    $aside .= '<li class="treeview">
+          <a href="' . $url . 'usuarios/">
+            <i class="fa fa-user" onclick="window.location.href=\'' . $url . 'usuarios/\'"></i>
             <span>Usuários</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
+            <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-            <li><a href="' . $url . 'usuarios/"><i class="fa fa-circle-o"></i>Lista</a></li>
-            <li><a href="' . $url . 'usuarios/addusuarios.php"><i class="fa fa-circle-o"></i>Add Usuários</a></li>
+            <li><a href="' . $url . 'usuarios/"><i class="fa fa-group"></i>Lista</a></li>
+            <li><a href="' . $url . 'usuarios/addusuarios.php"><i class="fa fa-user-plus"></i>Add Usuários</a></li>
           </ul>
-        </li>
+        </li>';
+}
 
-        <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
-            <span>Cliente</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
-          </a>
-          <ul class="treeview-menu">
-            <li><a href="' . $url . 'cliente/"><i class="fa fa-circle-o"></i>Lista</a></li>
-            <li><a href="' . $url . 'cliente/addcliente.php"><i class="fa fa-circle-o"></i>Add Cliente</a></li>
-            
-          </ul>
-        </li>
-
-        <li class="treeview">
-          <a href="#">
-            <i class="fa fa-table"></i>
+$aside .= '<li class="treeview">
+          <a href="' . $url . 'vendas/">
+            <i class="fa fa-shopping-cart" onclick="window.location.href=\'' . $url . 'vendas/\'"></i>
             <span>Vendas</span>
-            <span class="pull-right-container">
-              <i class="fa fa-angle-left pull-right"></i>
-            </span>
+            <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-            <li><a href="' . $url . 'vendas/"><i class="fa fa-circle-o"></i>Vendas</a></li>
-            
+            <li><a href="' . $url . 'vendas/"><i class="fa fa-money"></i>Vendas</a></li>
           </ul>
         </li>
-
-        
-        <li><a href="https://adminlte.io/themes/AdminLTE/index.html" target="_blank"><i class="fa fa-book"></i> <span>Documentation</span></a></li>
-        <li class="header">LABELS</li>
-        <li><a href="#"><i class="fa fa-circle-o text-red"></i> <span>Important</span></a></li>
-        <li><a href="#"><i class="fa fa-circle-o text-yellow"></i> <span>Warning</span></a></li>
-        <li><a href="#"><i class="fa fa-circle-o text-aqua"></i> <span>Information</span></a></li>
       </ul>
     </section>
     <!-- /.sidebar -->
@@ -689,8 +785,8 @@ $footer = '<footer class="main-footer">
     <div class="pull-right hidden-xs">
       <b>Version</b> 2.3.8
     </div>
-    <strong>Copyright &copy; 2014-2016 <a href="http://almsaeedstudio.com">Almsaeed Studio</a>.</strong> All rights
-    reserved.
+    <strong>Copyright &copy; GCV</strong> Todos os direitos reservados.<br>
+    <small>Contato: <a href="mailto:toledosamuel400@gmail.com">toledosamuel400@gmail.com</a> | Tel: (22) 9992-22049</small>
   </footer>
 
   <!-- Control Sidebar -->
@@ -944,6 +1040,34 @@ $javascript = '
       \'autoWidth\'   : false
     })
 })
+</script>
+
+<script>
+$(document).ready(function() {
+    // Manipulador para hover do submenu
+    $(".sidebar-menu .treeview").hover(
+        function() {
+            if(!$("body").hasClass("sidebar-collapse")) {
+                $(this).find(".treeview-menu").stop().slideDown(300);
+            }
+        },
+        function() {
+            if(!$("body").hasClass("sidebar-collapse")) {
+                $(this).find(".treeview-menu").stop().slideUp(300);
+            }
+        }
+    );
+
+    // Manipulador para clique no item principal do treeview
+    $(".sidebar-menu .treeview > a").click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var firstLink = $(this).siblings(".treeview-menu").find("li:first-child a").attr("href");
+        if(firstLink) {
+            window.location.href = firstLink;
+        }
+    });
+});
 </script>
 
 </body>

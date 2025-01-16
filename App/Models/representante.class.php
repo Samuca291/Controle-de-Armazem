@@ -1,5 +1,4 @@
 <?php
-
 /*
 Class produtos
 */
@@ -14,116 +13,125 @@ class Representante extends Connect
     if ($value == NULL) {
       $value = 1;
     }
-    $query = "SELECT * FROM `representante`, `fabricante` WHERE `Fabricante_idFabricante` = `idFabricante` AND (`repPublic` = '$value')";
+    $query = "SELECT * FROM `representante`, `fabricante` 
+              WHERE `Fabricante_idFabricante` = `idFabricante` 
+              AND (`repPublic` = '$value')
+              ORDER BY `NomeFabricante`, `NomeRepresentante`";
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
 
     if ($result) {
-
       while ($row = mysqli_fetch_array($result)) {
+        $statusClass = $row['repAtivo'] == 0 ? 'class="item-desativado"' : '';
+        $checkedStatus = $row['repAtivo'] == 1 ? 'checked' : '';
+        $publicIcon = $row['repPublic'] == 0 ? 'glyphicon-remove' : 'glyphicon-ok';
+        
+        // Linha da tabela
+        echo '<tr ' . $statusClass . '>
+          <td class="text-center">
+            <form class="label" name="ativ' . $row['idRepresentante'] . '" action="../../App/Database/action.php" method="post">
+              <input type="hidden" name="id" value="' . $row['idRepresentante'] . '">
+              <input type="hidden" name="current_status" value="' . $row['repAtivo'] . '">
+              <input type="hidden" name="tabela" value="representante">                  
+              <input type="checkbox" name="status" ' . $checkedStatus . ' value="1" onclick="this.form.submit();">
+            </form>
+          </td>
+          <td><span class="badge">' . $row['NomeFabricante'] . '</span></td>
+          <td>' . $row['NomeRepresentante'] . '</td>
+          <td>' . $row['TelefoneRepresentante'] . '</td>
+          <td>' . $row['EmailRepresentante'] . '</td>
+          <td>
+            <div class="tools">
+              <a href="#" data-toggle="modal" data-target="#editModal' . $row['idRepresentante'] . '" title="Editar">
+                <i class="fa fa-edit"></i>
+              </a>
+              <a href="#" data-toggle="modal" data-target="#statusModal' . $row['idRepresentante'] . '" title="Alterar Status">
+                <i class="glyphicon ' . $publicIcon . '"></i>
+              </a>
+              <a href="#" data-toggle="modal" data-target="#deleteModal' . $row['idRepresentante'] . '" title="Excluir" class="text-danger">
+                <i class="fa fa-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>';
 
-        if ($row['repAtivo'] == 0) {
-          $c = 'class="label-warning"';
-        } else {
-          $c = " ";
-        }
-        echo '<li ' . $c . '>
-
-          <!-- drag handle -->
-          <span class="handle">
-            <i class="fa fa-ellipsis-v"></i>
-            <i class="fa fa-ellipsis-v"></i>
-          </span>
-          <!-- checkbox -->
-          <form class="label" name="ativ' . $row['idRepresentante'] . '" action="../../App/Database/action.php" method="post">
-                    <input type="hidden" name="id" id="id" value="' . $row['idRepresentante'] . '">
-                    <input type="hidden" name="status" id="status" value="' . $row['repAtivo'] . '">
-                    <input type="hidden" name="tabela" id="tabela" value="representante">                  
-                    <input type="checkbox" id="status" name="status" ';
-        if ($row['repAtivo'] == 1) {
-          echo 'checked';
-        }
-        echo ' value="' . $row['repAtivo'] . '" onclick="this.form.submit();" /></form>
-
-                    <!-- todo text -->
-                    <span class="text"><span class="badge left">' . $row['NomeFabricante'] . ' </span> ' . $row['NomeRepresentante'] . '</span>
-                    <!-- Emphasis label -->
-                    <!-- <small class="label label-danger"><i class="fa fa-clock-o"></i> 2 mins</small> -->
-                    <!-- General tools such as edit or delete-->
-                     <div class="tools right">
-
-                      <a href="" data-toggle="modal" data-target="#myModalup' . $row['idRepresentante'] . '"><i class="fa fa-edit"></i></a> 
-                    
-                      <!-- Button trigger modal -->
-                    <a href="" data-toggle="modal" data-target="#myModal' . $row['idRepresentante'] . '">';
-
-        if ($row['repPublic'] == 0) {
-          echo '<i class="glyphicon glyphicon-remove" aria-hidden="true"></i>';
-        } else {
-          echo '<i class="glyphicon glyphicon-ok" aria-hidden="true"></i>';
-        }
-
-        echo '</a> </div>
-
-    <!-- Modal -->
-
-  <div class="modal fade" id="myModal' . $row['idRepresentante'] . '" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <form id="delRep' . $row['idRepresentante'] . '" name="delRep' . $row['idRepresentante'] . '" action="../../App/Database/delRepresentante.php" method="post" style="color:#000;">
-    
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="myModalLabel">Você tem serteza que deseja alterar o status deste item na sua lista.</h4>
+        // Modal de Edição
+        echo '<div class="modal fade" id="editModal' . $row['idRepresentante'] . '" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <form action="../../App/Database/insertrepresentante.php" method="post">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Editar Representante</h4>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" class="form-control" name="NomeRepresentante" value="' . $row['NomeRepresentante'] . '">
+                  </div>
+                  <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" class="form-control" name="TelefoneRepresentante" value="' . $row['TelefoneRepresentante'] . '">
+                  </div>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" class="form-control" name="EmailRepresentante" value="' . $row['EmailRepresentante'] . '">
+                  </div>
+                  <input type="hidden" name="idRepresentante" value="' . $row['idRepresentante'] . '">
+                  <input type="hidden" name="idFabricante" value="' . $row['Fabricante_idFabricante'] . '">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                  <button type="submit" name="update" class="btn btn-primary" value="Cadastrar">Salvar</button>
+                </div>
+              </form>
+            </div>
           </div>
-          <div class="modal-body">
-            Nome: ' . $row['NomeRepresentante'] . '
-          </div>
-          <input type="hidden" id="idRepresentante" name="idRepresentante" value="' . $row['idRepresentante'] . '">
-          <div class="modal-footer">
-            <button type="submit" value="Cancelar" class="btn btn-default">Não</button>
-            <button type="submit" name="update" value="Cadastrar" class="btn btn-primary">Sim</button>
-          </div>
-        </div>
-      </div>
-      
-    </form>
-    </div>
+        </div>';
 
-    <!-- Modal UPDATE -->
-  <div class="modal fade" id="myModalup' . $row['idRepresentante'] . '" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <form id="Up' . $row['idRepresentante'] . '" name="Up' . $row['idRepresentante'] . '" action="../../App/Database/insertrepresentante.php" method="post" style="color:#000;">
-    
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="myModalLabel">Atualização de dados.</h4>
+        // Modal de Status
+        echo '<div class="modal fade" id="statusModal' . $row['idRepresentante'] . '" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <form action="../../App/Database/delRepresentante.php" method="post">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Alterar Status do Representante</h4>
+                </div>
+                <div class="modal-body">
+                  <p>Deseja alterar o status do representante: ' . $row['NomeRepresentante'] . '?</p>
+                  <input type="hidden" name="idRepresentante" value="' . $row['idRepresentante'] . '">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                  <button type="submit" name="update" class="btn btn-primary" value="Cadastrar">Confirmar</button>
+                </div>
+              </form>
+            </div>
           </div>
-          <div class="modal-body">
-            Nome Atual:
-            <input type="text" id="NomeRepresentante" name="NomeRepresentante" value="' . $row['NomeRepresentante'] . '">
-          </div>
-          <div class="modal-body">
-            Nome Atual:
-            <input type="text" id="TelefoneRepresentante" name="TelefoneRepresentante" value="' . $row['TelefoneRepresentante'] . '">
-          </div>
-          <div class="modal-body">
-            Nome Atual:
-            <input type="text" id="EmailRepresentante" name="EmailRepresentante" value="' . $row['EmailRepresentante'] . '">
-          </div>        
-          <input type="hidden" id="idFabricante" name="idFabricante" value="' . $row['Fabricante_idFabricante'] . '">
+        </div>';
 
-          <input type="hidden" id="idRepresentante" name="idRepresentante" value="' . $row['idRepresentante'] . '">
-                   
-          <div class="modal-footer">
-            <button type="submit" value="Cancelar" class="btn btn-default">Não</button>
-            <button type="submit" name="update" value="Cadastrar" class="btn btn-primary">Sim</button>
+        // Modal de Exclusão
+        echo '<div class="modal fade" id="deleteModal' . $row['idRepresentante'] . '" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <form action="../../App/Database/excluirRepresentante.php" method="post">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                  <h4 class="modal-title">Excluir Representante</h4>
+                </div>
+                <div class="modal-body">
+                  <p>Tem certeza que deseja excluir o representante: <strong>' . $row['NomeRepresentante'] . '</strong>?</p>
+                  <p class="text-danger"><small>Esta ação não poderá ser desfeita.</small></p>
+                  <input type="hidden" name="idRepresentante" value="' . $row['idRepresentante'] . '">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                  <button type="submit" name="excluir" class="btn btn-danger">Excluir</button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      </div>
-      </form>
-    </div>
-                  </li>';
+        </div>';
       }
     }
   }
@@ -174,7 +182,6 @@ class Representante extends Connect
 
       $id = $row['idRepresentante'];
       $public = $row['repPublic'];
-
       if ($public == 1) {
         $p = 0;
       } else {
@@ -190,18 +197,53 @@ class Representante extends Connect
 
   public function Ativo($value, $id)
   {
-
-    if ($value == 0) {
-      $v = 1;
+    // Verifica o valor atual no banco
+    $query = "SELECT repAtivo FROM `representante` WHERE `idRepresentante` = '$id'";
+    $result = mysqli_query($this->SQL, $query);
+    
+    if($row = mysqli_fetch_array($result)) {
+        // Define o novo valor (inverte o status atual)
+        $novoStatus = ($row['repAtivo'] == 1) ? 0 : 1;
+        
+        // Atualiza o status no banco
+        $updateQuery = "UPDATE `representante` 
+                       SET `repAtivo` = '$novoStatus' 
+                       WHERE `idRepresentante` = '$id'";
+                       
+        if(mysqli_query($this->SQL, $updateQuery)) {
+            // Se a atualização foi bem sucedida, redireciona com mensagem de sucesso
+            header('Location: ../../views/representante/index.php?alert=1');
+        } else {
+            // Se houve erro na atualização, redireciona com mensagem de erro
+            header('Location: ../../views/representante/index.php?alert=0');
+        }
     } else {
-      $v = 0;
+        // Se não encontrou o representante, redireciona com mensagem de erro
+        header('Location: ../../views/representante/index.php?alert=0');
     }
+    exit();
+  }
 
-    $query = "UPDATE `representante` SET `repAtivo` = '$v' WHERE `idRepresentante` = '$id'";
-    $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
-
-    header('Location: ../../views/representante/');
-  } //Ativo
+  public function ExcluirRepresentante($id)
+  {
+    // Verifica se existe o representante
+    $query = "SELECT * FROM `representante` WHERE `idRepresentante` = '$id'";
+    $result = mysqli_query($this->SQL, $query);
+    
+    if($row = mysqli_fetch_array($result)) {
+        // Deleta o representante
+        $deleteQuery = "DELETE FROM `representante` WHERE `idRepresentante` = '$id'";
+        
+        if(mysqli_query($this->SQL, $deleteQuery)) {
+            header('Location: ../../views/representante/index.php?alert=1');
+        } else {
+            header('Location: ../../views/representante/index.php?alert=0');
+        }
+    } else {
+        header('Location: ../../views/representante/index.php?alert=0');
+    }
+    exit();
+  }
 
 }
 

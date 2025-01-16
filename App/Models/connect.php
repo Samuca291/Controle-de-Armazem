@@ -21,8 +21,12 @@ class Connect
 		if (!$this->SQL) {
 			die("Conexão com o banco de dados falhou!:" . mysqli_connect_error($this->SQL));
 		}
-	}
-
+		if (!mysqli_set_charset($this->SQL, "utf8")) {
+            die("Erro ao definir o charset UTF-8: " . mysqli_error($this->SQL));
+        }
+    }
+	
+	
 	function login($username, $password)
 	{
 

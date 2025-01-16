@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Vendas
  */
@@ -12,151 +11,130 @@ class Vendas extends Connect
   public function itensVerify($iditem, $quant, $perm)
   {
 
+    // Permite vendedor (perm=2) e administrador (perm=1)
     if ($perm > 2) {
-      $_SESSION['msg'] =  'Erro - Você não tem permissão!';
+      $_SESSION['msg'] = '<div class="alert alert-danger alert-dismissible">
+                          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                          <strong>Permissão Negada!</strong> Somente vendedores e administradores podem realizar vendas!
+                        </div>';
       header('Location: ../../views/vendas/index.php');
       exit();
     }
+  
 
-    $query = "SELECT * FROM `itens`, `produtos` WHERE `idItens` = '$iditem' AND `Produto_CodRefProduto` = `CodRefProduto`";
-    $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
-    $total = mysqli_num_rows($result);
+    $query = "SELECT i.*, p.NomeProduto 
+              FROM itens i 
+              INNER JOIN produtos p ON i.Produto_CodRefProduto = p.CodRefProduto 
+              WHERE i.idItens = ?";
 
-    if ($total > 0) {
+    $stmt = $this->SQL->prepare($query);
+    $stmt->bind_param('i', $iditem);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-      if ($row = mysqli_fetch_array($result)) {
-
-        $q = $row['QuantItens'];
-        $v = $row['QuantItensVend'];
-        $quantotal = $v + $quant;
-
-        if ($q >= $quantotal) {
-
-          return array('status' => '1', 'NomeProduto' => $row['NomeProduto'],);
-        } else {
-          $estoque = $q - $v;
-          return array('status' => '0', 'NomeProduto' => $row['NomeProduto'], 'estoque' => $estoque);
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        
+        $estoqueDisponivel = $row['QuantItens'] - $row['QuantItensVend'];
+        
+        if ($quant > $estoqueDisponivel) {
+            return array(
+                'status' => false,
+                'NomeProduto' => $row['NomeProduto'],
+                'estoque' => $estoqueDisponivel,
+                'message' => "Quantidade solicitada ({$quant}) excede o limite disponível em estoque ({$estoqueDisponivel})"
+            );
         }
-      }
-    } else {
 
-      $_SESSION['msg'] =  '<div class="alert alert-warning">
-      <strong>Ops!</strong> Produto (' . $iditem . ') não encontrado!</div>';
+        return array(
+            'status' => true,
+            'NomeProduto' => $row['NomeProduto'],
+            'estoque' => $estoqueDisponivel
+        );
+    } 
 
-      header('Location: ../../views/vendas/index.php');
-      exit;
+    $_SESSION['msg'] = '<div class="alert alert-warning">
+        <strong>Ops!</strong> Produto (' . $iditem . ') não encontrado!</div>';
+    header('Location: ../../views/vendas/index.php');
+    exit;
+  }
+
+  public function itensVendidos($iditem, $quant, $cart, $idUsuario, $perm, $block = null)
+  {
+    if ($perm > 2) {
+        $this->setError('Permissão negada para realizar vendas!');
+        return false;
+    }
+
+    // Inicia transação
+    $this->SQL->begin_transaction();
+
+    try {
+        // Verifica disponibilidade do item
+        $query = "SELECT i.*, p.NomeProduto 
+                 FROM itens i 
+                 INNER JOIN produtos p ON i.Produto_CodRefProduto = p.CodRefProduto 
+                 WHERE i.idItens = ? FOR UPDATE";
+        $stmt = $this->SQL->prepare($query);
+        $stmt->bind_param('i', $iditem);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if (!$result || $result->num_rows === 0) {
+            throw new Exception("Item não encontrado");
+        }
+
+        $row = $result->fetch_assoc();
+        $estoqueAtual = $row['QuantItens'];
+        $vendasAtuais = $row['QuantItensVend'];
+        $nomeProduto = $row['NomeProduto'];
+
+        // Verifica se há estoque suficiente
+        if ($estoqueAtual < ($vendasAtuais + $quant)) {
+            throw new Exception("Estoque insuficiente para o produto {$nomeProduto}");
+        }
+
+        // Calcula valor
+        $valor = ($row['ValVendItens'] * $quant);
+
+        // Registra a venda
+        $query = "INSERT INTO vendas (quantitens, valor, iditem, cart, idusuario, datareg) 
+                 VALUES (?, ?, ?, ?, ?, NOW())";
+        $stmt = $this->SQL->prepare($query);
+        $stmt->bind_param('idisi', $quant, $valor, $iditem, $cart, $idUsuario);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Erro ao registrar venda do produto {$nomeProduto}");
+        }
+
+        // Atualiza o estoque
+        $novaQuantidadeVendida = $vendasAtuais + $quant;
+        $query = "UPDATE itens 
+                 SET QuantItensVend = ? 
+                 WHERE idItens = ?";
+        $stmt = $this->SQL->prepare($query);
+        $stmt->bind_param('ii', $novaQuantidadeVendida, $iditem);
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Erro ao atualizar estoque do produto {$nomeProduto}");
+        }
+
+        $this->SQL->commit();
+        return array('status' => true, 'valor' => $valor);
+
+    } catch (Exception $e) {
+        $this->SQL->rollback();
+        $this->setError('Erro ao processar venda: ' . $e->getMessage());
+        return false;
     }
   }
 
-  public function itensVendidos($iditem, $quant, $cliente, $email, $cpfcliente, $cart, $idUsuario, $perm, $block = null)
-  {
-
-    $cpfcliente = Connect::limpaCPF_CNPJ($cpfcliente);
-    $idCliente = Vendas::idCliente($cpfcliente); // Verifica se o cliente existe no DB.
-
-    $jaComprou = (new Vendas)->jaComprou($idCliente, $iditem, $block);
-
-    if ($perm > 2) {
-      $_SESSION['msg'] =  '<div class="alert alert-danger alert-dismissible">
-<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-<strong>Erro!</strong> Você não tem permissão! </div>';
-      header('Location: ../../views/vendas/index.php');
-      exit();
-    } elseif ($cpfcliente == null && $cliente == null && $email == null && $cart == null) {
-      $_SESSION['msg'] =  '<div class="alert alert-danger alert-dismissible">
-      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-      <strong>Erro!</strong> Cadastre um Cliente! </div>';
-      header('Location: ../../views/vendas/index.php');
-      exit();
-    } elseif ($jaComprou >= 3) {
-      $_SESSION['msg'] =  '<div class="alert alert-danger alert-dismissible">
-      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-      <strong>Erro!</strong> O Cliente já efetuou "' . $jaComprou . '" compras este ano do produto Cód.:' . $iditem . '! </div>';
-      header('Location: ../../views/vendas/index.php');
-      exit();
-    }
-
-    $query = "SELECT * FROM `itens` WHERE `idItens`= '$iditem'";
-    $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
-
-    if ($result) {
-
-      //------Verificação da Venda-----------
-
-      if ($row = mysqli_fetch_array($result)) {
-
-        $q = $row['QuantItens'];
-        $v = $row['QuantItensVend'];
-
-        $quantotal = $v + $quant;
-
-        if ($q >= $quantotal) {
-
-          $valor = ($row['ValVendItens'] * $quant);
-
-          if ($idCliente > 0) { // Se o cliente existir, Retorne o ID do cliente
-            $idCliente = $idCliente; // ID do cliente
-          } else {
-
-            $novoclient = "INSERT INTO `cliente`(`idCliente`, `NomeCliente`, `EmailCliente`, `cpfCliente`, `statusCliente`, `Usuario_idUsuario`) VALUES (NULL,'$cliente','$email','$cpfcliente',1,'$idUsuario')";
-
-            if (mysqli_query($this->SQL, $novoclient) or die(mysqli_error($this->SQL))) {
-              $idCliente = mysqli_insert_id($this->SQL);
-            }
-          }
-
-
-          $query = "INSERT INTO `vendas`(`idvendas`, `quantitens`, `valor`, `iditem`, `cart`, `cliente_idCliente`, `idusuario`) VALUES (NULL, '$quant', '$valor', '$iditem', '$cart', '$idCliente', '$idUsuario')";
-          if ($result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL))) {
-
-
-            $query = "UPDATE `itens` SET `QuantItensVend` = '$quantotal' WHERE `idItens`= '$iditem'";
-            if ($result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL))) {
-
-              //limpa itens da lista
-              unset(
-                $_SESSION['itens'],
-                $_SESSION['CPF'],
-                $_SESSION['Cliente'],
-                $_SESSION['Email'],
-                $_SESSION['cart']
-              );
-
-              $_SESSION['notavd'] = $cart;
-              $_SESSION['msg'] = '<div class="alert alert-success alert-dismissible">
-                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                            <strong>Sucesso!</strong> Venda efetuada!</div>';
-            }
-          } else {
-            $_SESSION['msg'] =  '<div class="alert alert-danger alert-dismissible">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <strong>Erro!</strong> Venda não efetuada! </div>';
-
-            header('Location: ../../views/vendas/');
-            exit();
-          }
-        } else {
-
-          $estoque = $row['QuantItens'] - $row['QuantItensVend'];
-
-          $_SESSION['msg'] =  '<div class="alert alert-warning alert-dismissible">
-                      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                      <strong>Ops!</strong> Quantidade maior do que em estoque! </br> Quantidade em estoque: <b>' . $estoque . '</b></div>';
-          header('Location: ../../views/vendas/');
-          exit();
-        }
-
-        header('Location: ../../views/vendas/notavd.php');
-      }
-
-
-      //------------------
-
-    } else {
-      $_SESSION['alert'] = 0;
-      header('Location: ../../views/vendas/');
-    }
-  } // itensVendidos
+  private function setError($message) {
+    $_SESSION['msg'] = "<div class='alert alert-danger alert-dismissible'>
+        <button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>
+        <strong>Erro!</strong> $message
+    </div>";
+  }
 
   public function idcliente($cpfCliente)
   {
@@ -221,7 +199,6 @@ class Vendas extends Connect
   public function jaComprou($idCliente, $idItem = null, $block = null)
   {
     if (!empty($block)) {
-
 
       $Ano = date('Y');
       $dataAno = $Ano . '-01-01 00:00:00';

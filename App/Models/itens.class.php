@@ -48,127 +48,170 @@ class Itens extends Connect
     }
   }
 
-  public function index($value)
+  public function index($value = 1)
   {
-    $query = "SELECT * FROM `itens`,`fabricante`,`produtos` WHERE (`Fabricante_idFabricante` = `idFabricante` AND `Produto_CodRefProduto` = `CodRefProduto`) AND `itensPublic` = '$value'";
+    $query = "SELECT i.*, p.NomeProduto, f.NomeFabricante 
+              FROM itens i
+              INNER JOIN produtos p ON i.Produto_CodRefProduto = p.CodRefProduto
+              INNER JOIN fabricante f ON i.Fabricante_idFabricante = f.idFabricante
+              WHERE i.ItensPublic = '$value'";
+              
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
 
     if ($result) {
+        echo '<table id="example1" class="table">
+        <thead class="thead-inverse">
+          <tr>
+            <th>Ativo</th>
+            <th>Image</th>
+            <th>Nome Produto</th>
+            <th>Fabricante</th>
+            <th>Código de Barras</th> <!-- Nova coluna -->
+            <th>Quant. Estoque</th>
+            <th>Quant. Vendido</th>
+            <th>V. Compra</th>
+            <th>V. Venda</th>
+            <th>Data Compra</th>
+            <th>Data Vencimento</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>';
 
-      echo '<table id="example1" class="table">
-    <thead class="thead-inverse">
-      <tr>
-        <th>Ativo</th>
-        <th>Image</th>
-        <th>Nome Produto</th>
-        <th>Fabricante</th>
-        <th>Quant. Estoque</th>
-        <th>Quant. Vendido</th>
-        <th>V. Compra.</th>
-        <th>V. Vendido</th>
-        <th>Data Compra</th>
-        <th>Data Vencimento</th>
-        <th>Edit</th>
-        <th>Public</th>
-      </tr>
-    </thead>
-    <tbody>';
+        while ($row = mysqli_fetch_array($result)) {
+            $valor_compra = $this->format_moeda($row['ValCompItens']);
+            $valor_venda = $this->format_moeda($row['ValVendItens']);
 
-      while ($row = mysqli_fetch_array($result)) {
+            if ($row['ItensAtivo'] == 0) {
+                $c = 'class="label-warning"';
+            } else {
+                $c = "";
+            }
 
-        if ($row['ItensAtivo'] == 0) {
-          $c = 'class="label-warning"';
-        } else {
-          $c = " ";
+            echo '<tr ' . $c . '>
+                    <td>
+                        <form class="label" name="ativ' . $row['idItens'] . '" action="../../App/Database/action.php" method="post">
+                            <input type="hidden" name="id" value="' . $row['idItens'] . '">
+                            <input type="hidden" name="current_status" value="' . $row['ItensAtivo'] . '">
+                            <input type="hidden" name="tabela" value="itens">
+                            <input type="checkbox" name="status" ' . ($row['ItensAtivo'] == 1 ? 'checked' : '') . ' 
+                                value="1" onclick="this.form.submit();" ' . ($value == 0 ? 'disabled' : '') . '>
+                        </form>
+                    </td>
+                    <td>' . (!empty($row['Image']) ? '<img src="../' . $row['Image'] . '" width="50" />' : '') . '</td>
+                    <td>' . $row['NomeProduto'] . '</td>
+                    <td>' . $row['NomeFabricante'] . '</td>
+                    <td>' . ($row['CodigoBarras'] ? $row['CodigoBarras'] : 'Não cadastrado') . '</td> <!-- Nova coluna -->
+                    <td>' . $row['QuantItens'] . '</td>
+                    <td>' . $row['QuantItensVend'] . '</td>
+                    <td>' . $valor_compra . '</td>
+                    <td>' . $valor_venda . '</td>
+                    <td>' . date('d/m/Y', strtotime($row['DataCompraItens'])) . '</td>
+                    <td>' . date('d/m/Y', strtotime($row['DataVenci_Itens'])) . '</td>
+                    <td>
+                        <div class="tools">
+                            <a href="edititens.php?q=' . $row['idItens'] . '" title="Editar">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                            <a href="#" data-toggle="modal" data-target="#statusModal' . $row['idItens'] . '" title="Alterar Status">
+                                <i class="glyphicon ' . ($row['ItensPublic'] == 0 ? 'glyphicon-remove' : 'glyphicon-ok') . '"></i>
+                            </a>
+                            <a href="#" data-toggle="modal" data-target="#deleteModal' . $row['idItens'] . '" title="Excluir" class="text-danger">
+                                <i class="fa fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>';
+
+            // Modal de alteração de status
+            echo '<div class="modal fade" id="statusModal' . $row['idItens'] . '" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <form action="../../App/Database/updatePublicItens.php" method="post">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title">Alterar Status do Item</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p>Deseja ' . ($row['ItensPublic'] == 1 ? 'desativar' : 'ativar') . ' o item: ' . $row['NomeProduto'] . '?</p>
+                                <p class="text-warning"><small>' . ($row['ItensPublic'] == 1 ? 'O item será movido para a lista de desativados e terá seu status alterado para inativo.' : '') . '</small></p>
+                            </div>
+                            <input type="hidden" name="id" value="' . $row['idItens'] . '">
+                            <input type="hidden" name="current_public" value="' . $row['ItensPublic'] . '">
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Confirmar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>';
+
+            // Modal de confirmação de exclusão
+            echo '<div class="modal fade" id="deleteModal' . $row['idItens'] . '" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <form action="../../App/Database/deleteitem.php" method="post">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title">Excluir Item</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p>Tem certeza que deseja excluir o item: ' . $row['NomeProduto'] . '?</p>
+                            </div>
+                            <input type="hidden" name="id" value="' . $row['idItens'] . '">
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" name="deletar" class="btn btn-danger">Sim</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>';
         }
-        echo '<tr ' . $c . '><th>
-          <!-- drag handle -->
-          <span class="handle">
-            <i class="fa fa-ellipsis-v"></i>
-            <i class="fa fa-ellipsis-v"></i>
-          </span>
-
-          <!-- checkbox -->';
-        $id = $row['idItens'];
-        $Ativo = $row['ItensAtivo'];
-
-        echo '<form class="label" name="ativ' . $id . '" enctype="multipart/form-data"  action="../../App/Database/action.php" method="post">
-          <input type="hidden" name="id" id="id_action' . $id . '" value="' . $id . '">          
-          <input type="hidden" id="status' . $id . '" name="status" 
-          value="' . $Ativo . '">
-          <input type="hidden" name="tabela" id="tabela' . $id . '" value="itens">  
-
-          <input type="checkbox" id="checked' . $id . '" name="checked[' . $id . ']" ';
-        if ($Ativo == 1) {
-          echo "checked";
-        }
-        echo ' value="' . $Ativo . '" onclick="this.form.submit();"></form>
-          </th><td>
-          ';
-
-        if (!empty($row['Image'])) {
-          echo '<img src="../' . $row['Image'] . '" width="50" />';
-        }
-        echo '</td><td>' . $row['NomeProduto'] . '</td>
-          <td>' . $row['NomeFabricante'] . '</td>
-          <td>' . $row['QuantItens'] . '</td>
-          <td>' . $row['QuantItensVend'] . '</td>
-          <td>' . $row['ValCompItens'] . '</td>
-          <td>' . $row['ValVendItens'] . '</td>
-          <td>' . $row['DataCompraItens'] . '</td>
-          <td>' . $row['DataVenci_Itens'] . '</td>        
-          
-          <td>
-                <a href="edititens.php?q=' . $row['idItens'] . '"><i class="fa fa-edit"></i></a>
-          </td>
-          <td>
-              <!-- Button trigger modal -->
-                    <a href="" data-toggle="modal" data-target="#myModal' . $row['idItens'] . '">';
-
-        if ($row['Public'] == 0) {
-          echo '<i class="glyphicon glyphicon-remove" aria-hidden="true"></i>';
-        } else {
-          echo '<i class="glyphicon glyphicon-ok" aria-hidden="true"></i>';
-        }
-
-        echo '</a>
-
-
-    <!-- Modal -->
-  <div>
-    <form id="delItens' . $row['idItens'] . '" name="delItens' . $row['idItens'] . '" action="../../App/Database/delItens.php" method="post" style="color:#000;">
-    <div class="modal fade" id="myModal' . $row['idItens'] . '" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="myModalLabel">Você tem serteza que deseja alterar o status deste item na sua lista.</h4>
-          </div>
-          <div class="modal-body">
-            Código: ' . $row['idItens'] . ' - ' . $row['NomeProduto'] . ' - ' . $row['NomeFabricante'] . '
-          </div>
-          <input type="hidden" id="id' . $row['idItens'] . '" name="id" value="' . $row['idItens'] . '">
-          <div class="modal-footer">
-            <button type="submit" value="Cancelar" class="btn btn-default">Não</button>
-            <button type="submit" name="update" value="Cadastrar" class="btn btn-primary">Sim</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    </form></div>
-
-          </td>
-            </tr>';
-      }
-      echo '</tbody>
-  </table>';
+        echo '</tbody></table>';
     }
   }
 
-  public function InsertItens($nomeimagem, $QuantItens, $ValCompItens, $ValVendItens, $DataCompraItens, $DataVenci_Itens, $Produto_CodRefProduto, $Fabricante_idFabricante, $idusuario)
+  public function InsertItens($nomeimagem, $QuantItens, $ValCompItens, $ValVendItens, $DataCompraItens, $DataVenci_Itens, $Produto_CodRefProduto, $Fabricante_idFabricante, $idusuario, $codigoBarras = null)
   {
-
-    $query = "INSERT INTO `itens`(`idItens`,`Image` ,`QuantItens`, `QuantItensVend`, `ValCompItens`, `ValVendItens`, `DataCompraItens`, `DataVenci_Itens`, `ItensAtivo`,`ItensPublic`, `Produto_CodRefProduto`, `Fabricante_idFabricante`, `Usuario_idUser`) VALUES (NULL, '$nomeimagem', '$QuantItens', 0, '$ValCompItens', '$ValVendItens', '$DataCompraItens', '$DataVenci_Itens', 1, 1, '$Produto_CodRefProduto', '$Fabricante_idFabricante', '$idusuario')";
+    $codigoBarras = $codigoBarras ? "'$codigoBarras'" : "NULL";
+    
+    $query = "INSERT INTO `itens`(
+        `idItens`,
+        `Image`,
+        `QuantItens`, 
+        `QuantItensVend`, 
+        `ValCompItens`, 
+        `ValVendItens`, 
+        `DataCompraItens`, 
+        `DataVenci_Itens`, 
+        `ItensAtivo`,
+        `ItensPublic`, 
+        `Produto_CodRefProduto`, 
+        `Fabricante_idFabricante`, 
+        `Usuario_idUser`,
+        `CodigoBarras`
+    ) VALUES (
+        NULL, 
+        '$nomeimagem', 
+        '$QuantItens', 
+        0, 
+        '$ValCompItens', 
+        '$ValVendItens', 
+        '$DataCompraItens', 
+        '$DataVenci_Itens', 
+        1, 
+        1, 
+        '$Produto_CodRefProduto', 
+        '$Fabricante_idFabricante', 
+        '$idusuario',
+        $codigoBarras
+    )";
     if ($result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL))) {
 
       header('Location: ../../views/itens/index.php?alert=1');
@@ -177,39 +220,40 @@ class Itens extends Connect
     }
   } //InsertItens
 
-  public function editItens($value)
-  {
-    $query = "SELECT *FROM `itens` WHERE `idItens` = '$value'";
-    $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
+  public function editItens($value) {
+    $query = "SELECT i.*, p.NomeProduto, p.CodRefProduto 
+              FROM itens i 
+              INNER JOIN produtos p ON i.Produto_CodRefProduto = p.CodRefProduto 
+              WHERE i.idItens = ?";
+              
+    $stmt = $this->SQL->prepare($query);
+    $stmt->bind_param('i', $value);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if ($row = mysqli_fetch_array($result)) {
-
-      $idItens = $row['idItens'];
-      $nomeimagem = $row['Image'];
-      $QuantItens = $row['QuantItens'];
-      $ValCompItens = $row['ValCompItens'];
-      $ValVendItens = $row['ValVendItens'];
-      $DataCompraItens = $row['DataCompraItens'];
-      $DataVenci_Itens = $row['DataVenci_Itens'];
-      $Produto_CodRefProduto = $row['Produto_CodRefProduto'];
-      $Fabricante_idFabricante = $row['Fabricante_idFabricante'];
-
-      return $resp = array('Itens' => [
-        'idItens' => $idItens,
-        'Image' => $nomeimagem,
-        'QuantItens'   => $QuantItens,
-        'ValCompItens' => $ValCompItens,
-        'ValVendItens' => $ValVendItens,
-        'DataCompraItens' => $DataCompraItens,
-        'DataVenci_Itens' => $DataVenci_Itens,
-        'CodRefProduto' => $Produto_CodRefProduto,
-        'idFabricante' => $Fabricante_idFabricante
-      ],);
+    if ($row = $result->fetch_assoc()) {
+        return [
+            'Itens' => [
+                'idItens' => $row['idItens'],
+                'Image' => $row['Image'],
+                'QuantItens' => $row['QuantItens'],
+                'ValCompItens' => $row['ValCompItens'],
+                'ValVendItens' => $row['ValVendItens'],
+                'DataCompraItens' => $row['DataCompraItens'],
+                'DataVenci_Itens' => $row['DataVenci_Itens'],
+                'CodRefProduto' => $row['CodRefProduto'],
+                'idFabricante' => $row['Fabricante_idFabricante'],
+                'CodigoBarras' => $row['CodigoBarras']  // Certifique-se de que este campo existe na tabela
+            ]
+        ];
     }
+    return null;
   }
 
-  public function updateItens($idItens, $nomeimagem, $QuantItens, $ValCompItens, $ValVendItens, $DataCompraItens, $DataVenci_Itens, $Produto_CodRefProduto, $Fabricante_idFabricante, $idusuario)
+  public function updateItens($idItens, $nomeimagem, $QuantItens, $ValCompItens, $ValVendItens, $DataCompraItens, $DataVenci_Itens, $Produto_CodRefProduto, $Fabricante_idFabricante, $idusuario, $codigoBarras = null)
   {
+    $codigoBarras = $codigoBarras ? "'$codigoBarras'" : "NULL";
+    
     $query = "UPDATE `itens` SET
       `Image` = '$nomeimagem', 
       `QuantItens`= '$QuantItens',
@@ -219,7 +263,8 @@ class Itens extends Connect
       `DataVenci_Itens`='$DataVenci_Itens',
       `Produto_CodRefProduto`='$Produto_CodRefProduto',
       `Fabricante_idFabricante`='$Fabricante_idFabricante',
-      `Usuario_idUser`='$idusuario' 
+      `Usuario_idUser`='$idusuario',
+      `CodigoBarras`= $codigoBarras
       WHERE `idItens`= '$idItens'";
 
     if ($result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL))) {
@@ -300,6 +345,48 @@ class Itens extends Connect
         return 0;
       }
     }
+  }
+
+  public function DeleteItem($id) {
+    // Se não houver vendas vinculadas, exclui o item
+    $query = "DELETE FROM itens WHERE idItens = '$id'";
+    if (mysqli_query($this->SQL, $query)) {
+        return true;
+    }
+    return false;
+  }
+
+  public function getItemByBarcode($codigoBarras) {
+    $query = "SELECT i.*, p.NomeProduto, p.CodRefProduto, f.NomeFabricante 
+              FROM itens i 
+              INNER JOIN produtos p ON i.Produto_CodRefProduto = p.CodRefProduto 
+              INNER JOIN fabricante f ON i.Fabricante_idFabricante = f.idFabricante
+              WHERE i.CodigoBarras = ? AND i.ItensAtivo = 1
+              LIMIT 1";
+              
+    $stmt = $this->SQL->prepare($query);
+    $stmt->bind_param('s', $codigoBarras);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+  }
+
+  public function verificaCodigoBarras($codigoBarras, $idItens = null) {
+    if (empty($codigoBarras)) return true; // Se não houver código, permite passar
+    
+    if ($idItens) {
+        $query = "SELECT idItens FROM itens WHERE CodigoBarras = ? AND idItens != ? AND ItensPublic = 1";
+        $stmt = $this->SQL->prepare($query);
+        $stmt->bind_param('si', $codigoBarras, $idItens);
+    } else {
+        $query = "SELECT idItens FROM itens WHERE CodigoBarras = ? AND ItensPublic = 1";
+        $stmt = $this->SQL->prepare($query);
+        $stmt->bind_param('s', $codigoBarras);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->num_rows === 0; // Retorna true se não existir duplicado
   }
 }
 

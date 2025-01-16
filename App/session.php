@@ -2,11 +2,11 @@
 session_start();
 
 $username = $_POST['username'];
-$password  = md5($_POST['password']);
+$password  = md5($_POST['password']);  // MD5 deixa a senha criptografada
 
 if ($username == NULL || $password == NULL) {
 
-	echo "<script>alert('Você deve digitar seu nome e senha');</script>";
+	echo "<script>alert('Para login, deve preencher o campo de Nome e Senha! ');</script>";
 	echo "<script> window.location.href='../login.php'</script>";
 	exit;
 } else {
