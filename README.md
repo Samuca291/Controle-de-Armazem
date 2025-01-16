@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Controle de estoque em PHP
 
 ### Requisitos mínimos
@@ -19,3 +20,7 @@ https://estoque.fabricsoft.com.br
 Usuário: admin
 
 Senha: admin
+=======
+# Gerenciamento_Estoque
+Trabalho de extensão da Faculdade Estácio, disciplina de Python.
+>>>>>>> 3e237885720c09b1580c9e96d1481c3f2c52c82e
